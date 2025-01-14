@@ -36,3 +36,66 @@ FlyBySound_validClasses = {
 
 	"gmod_wheel",
 }
+
+local function isValidClass(ent)
+	for _, class in ipairs(FlyBySound_validClasses) do
+		if ent:GetClass() == class then
+			return true
+		end
+	end
+
+	return false
+end
+
+-- Properties for Sandbox (hold C and right click on an entity)
+properties.Add("flybysounds_on", {
+	MenuLabel = "Enable Fly By Sounds",
+	Order = 3200,
+	MenuIcon = "icon16/sound.png",
+
+	Filter = function(self, ent, ply)
+		if (!IsValid(ent)) then return false end
+		if (ent:IsPlayer()) then return false end
+		if (!isValidClass(ent)) then return false end
+
+		return ent:GetNW2Bool("flyBySoundsDisabled", false)
+	end,
+
+	Action = function (self, ent)
+		self:MsgStart()
+			net.WriteEntity(ent)
+		self:MsgEnd()
+	end,
+
+	Receive = function (self, length, ply)
+		local ent = net.ReadEntity()
+
+		ent:SetNW2Bool("flyBySoundsDisabled", false)
+	end
+})
+
+properties.Add("flybysounds_off", {
+  MenuLabel = "Disable Fly By Sounds",
+  Order = 3201,
+  MenuIcon = "icon16/sound_mute.png",
+
+  Filter = function(self, ent, ply)
+    if (!IsValid(ent)) then return false end
+    if (ent:IsPlayer()) then return false end
+		if (!isValidClass(ent)) then return false end
+
+    return !ent:GetNW2Bool("flyBySoundsDisabled", false)
+  end,
+
+  Action = function (self, ent)
+    self:MsgStart()
+      net.WriteEntity(ent)
+    self:MsgEnd()
+  end,
+
+  Receive = function (self, length, ply)
+    local ent = net.ReadEntity()
+
+    ent:SetNW2Bool("flyBySoundsDisabled", true)
+  end
+})

@@ -64,6 +64,9 @@ end, "flybysounds_altsound_callback")
 
 local function isEntityRelevant(ent)
   if not IsValid(ent) then return false end
+
+  if ent:GetNW2Bool("flyBySoundsDisabled", false) then return false end
+
   if cutoffDist > 0 and EyePos():DistToSqr(ent:GetPos()) > cutoffDist * cutoffDist then return false end
 
   if ent:IsPlayer() then
