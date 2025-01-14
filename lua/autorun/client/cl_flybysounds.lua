@@ -7,11 +7,11 @@ CreateClientConVar("cl_flybysound_updatedelay", 0.05, true, false, "How often th
 CreateClientConVar("cl_flybysound_cutoffdist", 3000, true, false, "Maximum distance at which sounds can be heard. Smaller values can give better performance in large maps.", 0, 10000)
 CreateClientConVar("cl_flybysound_altsound", 0, true, false, "If set to 1 then an alternative wind sound will play. (Portal 2)")
 
-concommand.Add("cl_flybysound_resetconvars",function()
-  RunConsoleCommand("cl_flybysound_scandelay", 0.5)
-  RunConsoleCommand("cl_flybysound_updatedelay", 0.05)
-  RunConsoleCommand("cl_flybysound_cutoffdist", 3000)
-  RunConsoleCommand("cl_flybysound_altsound", 0)
+concommand.Add("cl_flybysound_resetconvars", function()
+  GetConVar("cl_flybysound_scandelay"):Revert()
+  GetConVar("cl_flybysound_updatedelay"):Revert()
+  GetConVar("cl_flybysound_cutoffdist"):Revert()
+  GetConVar("cl_flybysound_altsound"):Revert()
 end)
 
 local function updateCVars()
@@ -198,4 +198,52 @@ hook.Add("EntityRemoved", "FlyBySound_EntityRemoved", function(ent)
   if ent.FlyBySound then
     ent.FlyBySound:Stop()
   end
+end)
+
+-- Spawnmenu -> Options -> Fly By Sounds
+hook.Add("PopulateToolMenu", "FlyBySoundsMenu", function()
+	spawnmenu.AddToolMenuOption("Options", "Fly By Sounds", "FlyBySoundsClientMenu", "Client Options", "", "", function(panel)
+		panel:ClearControls()
+		panel:Help("Fly By Sounds Client Options")
+		panel:Help("(All number sliders have an effect on performance!)")
+
+		panel:Help(" ")
+
+		panel:NumSlider("Entity Scan Delay", "cl_flybysound_scandelay", 0.00, 1.00, 2)
+		panel:NumSlider("Sound Update Delay", "cl_flybysound_updatedelay", 0.00, 0.300, 2)
+
+		panel:NumSlider("Maximum Audible Distance", "cl_flybysound_cutoffdist", 0, 10000, 1)
+
+		panel:CheckBox("Alternative Sound Effect", "cl_flybysound_altsound")
+
+		panel:Help(" ")
+
+		panel:Button("Reset To Defaults", "cl_flybysound_resetconvars", {})
+	end)
+
+	spawnmenu.AddToolMenuOption("Options", "Fly By Sounds", "FlyBySoundsServerMenu", "Server Options", "", "", function(panel)
+		panel:ClearControls()
+		panel:Help("Fly By Sounds Server Options")
+
+		panel:Help(" ")
+
+		panel:NumSlider("Minimum Speed", "sv_flybysound_minspeed", 0, 2000, 0)
+		panel:NumSlider("Maximum Speed", "sv_flybysound_maxspeed", 1, 1000, 0)
+
+		panel:NumSlider("Minimum Shape Size", "sv_flybysound_minshapevolume", 0, 1000, 0)
+		panel:NumSlider("Maximum Shape Size", "sv_flybysound_maxshapevolume", 1, 1000, 0)
+
+		panel:Help(" ")
+
+		panel:NumSlider("Minimum Volume", "sv_flybysound_minvol", 1, 100, 2)
+
+		panel:Help(" ")
+
+		panel:CheckBox("Apply to Players", "sv_flybysound_playersounds")
+		panel:CheckBox("Spinning Sounds", "sv_flybysound_spinsounds")
+
+		panel:Help(" ")
+
+		panel:Button("Reset To Defaults", "sv_flybysound_resetconvars", {})
+	end)
 end)
