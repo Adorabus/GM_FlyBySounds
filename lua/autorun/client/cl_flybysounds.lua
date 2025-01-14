@@ -7,27 +7,39 @@ CreateClientConVar("cl_flybysound_updatedelay", 0.05, true, false, "How often th
 CreateClientConVar("cl_flybysound_cutoffdist", 3000, true, false, "Maximum distance at which sounds can be heard. Smaller values can give better performance in large maps.", 0, 10000)
 CreateClientConVar("cl_flybysound_altsound", 0, true, false, "If set to 1 then an alternative wind sound will play. (Portal 2)")
 
+cv_minspeed        = GetConVar("sv_flybysound_minspeed")
+cv_maxspeed        = GetConVar("sv_flybysound_maxspeed")
+cv_minshapevolume  = GetConVar("sv_flybysound_minshapevolume")
+cv_maxshapevolume  = GetConVar("sv_flybysound_maxshapevolume")
+cv_minvol          = GetConVar("sv_flybysound_minvol")
+cv_cutoffDist      = GetConVar("cl_flybysound_cutoffdist")
+cv_scanDelay       = GetConVar("cl_flybysound_scandelay")
+cv_updateDelay     = GetConVar("cl_flybysound_updatedelay")
+cv_playerSounds    = GetConVar("sv_flybysound_playersounds")
+cv_spinSounds      = GetConVar("sv_flybysound_spinsounds")
+cv_windSound       = GetConVar("cl_flybysound_altsound")
+
 concommand.Add("cl_flybysound_resetconvars", function()
-  GetConVar("cl_flybysound_scandelay"):Revert()
-  GetConVar("cl_flybysound_updatedelay"):Revert()
-  GetConVar("cl_flybysound_cutoffdist"):Revert()
-  GetConVar("cl_flybysound_altsound"):Revert()
+  cv_scanDelay:Revert()
+  cv_updateDelay:Revert()
+  cv_cutoffDist:Revert()
+  cv_windSound:Revert()
 end)
 
 local function updateCVars()
-  minspeed        = GetConVar("sv_flybysound_minspeed"):GetInt()
-  maxspeed        = GetConVar("sv_flybysound_maxspeed"):GetInt()
-  minshapevolume  = GetConVar("sv_flybysound_minshapevolume"):GetInt()
-  maxshapevolume  = GetConVar("sv_flybysound_maxshapevolume"):GetInt()
-  minvol          = GetConVar("sv_flybysound_minvol"):GetInt()
-  cutoffDist      = GetConVar("cl_flybysound_cutoffdist"):GetInt()
-  scanDelay       = GetConVar("cl_flybysound_scandelay"):GetFloat()
-  updateDelay     = GetConVar("cl_flybysound_updatedelay"):GetFloat()
-  playerSounds    = GetConVar("sv_flybysound_playersounds"):GetBool()
-  spinSounds      = GetConVar("sv_flybysound_spinsounds"):GetBool()
+  minspeed        = cv_minspeed:GetInt()
+  maxspeed        = cv_maxspeed:GetInt()
+  minshapevolume  = cv_minshapevolume:GetInt()
+  maxshapevolume  = cv_maxshapevolume:GetInt()
+  minvol          = cv_minvol:GetInt()
+  cutoffDist      = cv_cutoffDist:GetInt()
+  scanDelay       = cv_scanDelay:GetFloat()
+  updateDelay     = cv_updateDelay:GetFloat()
+  playerSounds    = cv_playerSounds:GetBool()
+  spinSounds      = cv_spinSounds:GetBool()
 
   windSound = "pink/flybysounds/fast_windloop1-louder.wav"
-  if GetConVar("cl_flybysound_altsound"):GetBool() == true then
+  if cv_windSound:GetBool() == true then
     windSound = "pink/flybysounds/portal2_wind.wav"
   end
 end
