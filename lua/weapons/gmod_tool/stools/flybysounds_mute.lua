@@ -13,7 +13,6 @@ local function SetEntityMute(ent, mute)
 	if (CLIENT) then return true end
 
   ent:SetNW2Bool("flyBySoundsDisabled", mute)
-  ent.flyBySoundsMutedBy = nil
 
 	return true
 end
