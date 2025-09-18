@@ -1,5 +1,9 @@
 local minspeed, maxspeed, minshapevolume, maxshapevolume, minvol, cutoffDist, scanDelay, updateDelay, spinSounds, playerSounds, windSound
 
+local function isValidSound(soundObj)
+  return soundObj and isfunction(soundObj.Stop)
+end
+
 local relevantEntities = {}
 
 CreateClientConVar("cl_flybysound_scandelay", 0.5, true, false, "How often the script scans for relevant entities. Smaller values give faster feedback but are more CPU intensive.", 0.0, 1.0)
@@ -52,7 +56,7 @@ cvars.AddChangeCallback("cl_flybysound_altsound", function(convar, oldVal, newVa
   updateCVars()
 
   for _, entity in ipairs(relevantEntities) do
-    if not entity.FlyBySound then continue end
+    if not isValidSound(entity.FlyBySound) then continue end
 
     entity.FlyBySound:Stop()
     entity.FlyBySoundPlaying = false
@@ -112,7 +116,7 @@ local function scanForRelevantEntities()
       if ent == LocalPlayer() then continue end
       if isEntityRelevant(ent) then
         table.insert(relevantEntities, ent)
-      elseif ent.FlyBySound and ent.FlyBySound:IsPlaying() then
+      elseif isValidSound(ent.FlyBySound) and ent.FlyBySound:IsPlaying() then
         ent.FlyBySound:Stop()
         ent.FlyBySoundPlaying = false
       end
@@ -151,7 +155,7 @@ local function updateSound(entity)
   if speed <= minspeed then
     if entity.FlyBySoundPlaying then
       entity.FlyBySoundPlaying = false
-      if entity.FlyBySound then entity.FlyBySound:FadeOut(0.5) end
+      if isValidSound(entity.FlyBySound) then entity.FlyBySound:FadeOut(0.5) end
     end
     return
   end
@@ -170,12 +174,14 @@ local function updateSound(entity)
   local pitch = ((1 - ((math.Clamp(shapevolume, minshapevolume, maxshapevolume) - minshapevolume) / (maxshapevolume - minshapevolume))) * 200) - (dist / 500) * 50
   pitch = math.max(pitch, 10)
 
-  if entity.FlyBySoundPlaying then
-    entity.FlyBySound:ChangeVolume(volume, 0)
-    entity.FlyBySound:ChangePitch(pitch, 0)
-  else
-    entity.FlyBySoundPlaying = true
-    entity.FlyBySound:PlayEx(volume, pitch)
+  if isValidSound(entity.FlyBySound) then
+    if entity.FlyBySoundPlaying then
+      entity.FlyBySound:ChangeVolume(volume, 0)
+      entity.FlyBySound:ChangePitch(pitch, 0)
+    else
+      entity.FlyBySoundPlaying = true
+      entity.FlyBySound:PlayEx(volume, pitch)
+    end
   end
 end
 
@@ -203,14 +209,14 @@ hook.Add("Think", "FlyBySound_Think", function()
 
   if (playerSounds and LocalPlayer():GetMoveType() != MOVETYPE_NOCLIP) then
     updateSound(LocalPlayer())
-  elseif LocalPlayer().FlyBySound and LocalPlayer().FlyBySound:IsPlaying() then
+  elseif isValidSound(LocalPlayer().FlyBySound) and LocalPlayer().FlyBySound:IsPlaying() then
     LocalPlayer().FlyBySound:Stop()
     LocalPlayer().FlyBySoundPlaying = false
   end
 end)
 
 hook.Add("EntityRemoved", "FlyBySound_EntityRemoved", function(ent)
-  if ent.FlyBySound then
+  if isValidSound(ent.FlyBySound) then
     ent.FlyBySound:Stop()
   end
 end)
