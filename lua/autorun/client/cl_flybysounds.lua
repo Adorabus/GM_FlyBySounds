@@ -1,7 +1,15 @@
-local minspeed, maxspeed, minshapevolume, maxshapevolume, minvol, cutoffDist, scanDelay, updateDelay, spinSounds, playerSounds, windSound
+local minspeed, maxspeed, minshapevolume, maxshapevolume, minvol, cutoffDist, scanDelay, updateDelay, spinSounds, playerSounds, windSound, debugMode
+
+
 
 local function isValidSound(soundObj)
   return soundObj and isfunction(soundObj.Stop)
+end
+
+local function debugPrint(...)
+  if not debugMode then return end
+
+  print('[FlyBySounds]', ...)
 end
 
 local relevantEntities = {}
@@ -10,6 +18,7 @@ CreateClientConVar("cl_flybysound_scandelay", 0.5, true, false, "How often the s
 CreateClientConVar("cl_flybysound_updatedelay", 0.05, true, false, "How often the script updates sound effects (pitch, volume). Smaller values give smoother sound transitions but more CPU intensive.", 0.0, 0.3)
 CreateClientConVar("cl_flybysound_cutoffdist", 3000, true, false, "Maximum distance at which sounds can be heard. Smaller values can give better performance in large maps.", 0, 10000)
 CreateClientConVar("cl_flybysound_altsound", 0, true, false, "If set to 1 then an alternative wind sound will play. (Portal 2)")
+CreateClientConVar("cl_flybysound_debug", 0, true, false, "If set to 1 then debug messages will be displayed.")
 
 cv_minspeed        = GetConVar("sv_flybysound_minspeed")
 cv_maxspeed        = GetConVar("sv_flybysound_maxspeed")
@@ -22,12 +31,15 @@ cv_updateDelay     = GetConVar("cl_flybysound_updatedelay")
 cv_playerSounds    = GetConVar("sv_flybysound_playersounds")
 cv_spinSounds      = GetConVar("sv_flybysound_spinsounds")
 cv_windSound       = GetConVar("cl_flybysound_altsound")
+cv_debug           = GetConVar('cl_flybysound_debug')
+
 
 concommand.Add("cl_flybysound_resetconvars", function()
   cv_scanDelay:Revert()
   cv_updateDelay:Revert()
   cv_cutoffDist:Revert()
   cv_windSound:Revert()
+  cv_debug:Revert()
 end)
 
 local function updateCVars()
@@ -41,6 +53,7 @@ local function updateCVars()
   updateDelay     = cv_updateDelay:GetFloat()
   playerSounds    = cv_playerSounds:GetBool()
   spinSounds      = cv_spinSounds:GetBool()
+  debugMode       = cv_debug:GetBool()
 
   windSound = "pink/flybysounds/fast_windloop1-louder.wav"
   if cv_windSound:GetBool() == true then
@@ -161,6 +174,7 @@ local function updateSound(entity)
   end
 
   if not entity.FlyBySound then
+    debugPrint('Creating Sound', entity)
     entity.FlyBySound = CreateSound(entity, windSound)
   end
 
@@ -186,34 +200,45 @@ local function updateSound(entity)
 end
 
 local lastScan = 0
-
--- this can run less often to save CPU time
-hook.Add("Think", "FlyBySound_Scan", function()
-  if scanDelay > 0 and CurTime() < lastScan + scanDelay then return end
-  lastScan = CurTime()
-
-  updateCVars()
-  scanForRelevantEntities()
-end)
-
 local lastUpdate = 0
 
--- this must run more often to create smooth sound transitions
-hook.Add("Think", "FlyBySound_Think", function()
-  if updateDelay > 0 and CurTime() < lastUpdate + updateDelay then return end
-  lastUpdate = CurTime()
+local function registerThinkHooks()
+  -- this can run less often to save CPU time
+  hook.Add("Think", "FlyBySound_Scan", function()
+    if scanDelay > 0 and CurTime() < lastScan + scanDelay then return end
+    lastScan = CurTime()
 
-  for _, entity in ipairs(relevantEntities) do
-    updateSound(entity)
-  end
+    updateCVars()
+    scanForRelevantEntities()
+  end)
 
-  if (playerSounds and LocalPlayer():GetMoveType() != MOVETYPE_NOCLIP) then
-    updateSound(LocalPlayer())
-  elseif isValidSound(LocalPlayer().FlyBySound) and LocalPlayer().FlyBySound:IsPlaying() then
-    LocalPlayer().FlyBySound:Stop()
-    LocalPlayer().FlyBySoundPlaying = false
-  end
+  -- this must run more often to create smooth sound transitions
+  hook.Add("Think", "FlyBySound_Think", function()
+    if updateDelay > 0 and CurTime() < lastUpdate + updateDelay then return end
+    lastUpdate = CurTime()
+
+    for _, entity in ipairs(relevantEntities) do
+      updateSound(entity)
+    end
+
+    if (playerSounds and LocalPlayer():GetMoveType() != MOVETYPE_NOCLIP) then
+      updateSound(LocalPlayer())
+    elseif isValidSound(LocalPlayer().FlyBySound) and LocalPlayer().FlyBySound:IsPlaying() then
+      LocalPlayer().FlyBySound:Stop()
+      LocalPlayer().FlyBySoundPlaying = false
+    end
+  end)
+
+  debugPrint('Think Hooks Addded')
+end
+
+-- register the hooks when the map is loaded
+hook.Add("InitPostEntity", "FlyBySound_Init", function ()
+  registerThinkHooks()
 end)
+
+-- re-register for development hot-reloads
+registerThinkHooks()
 
 hook.Add("EntityRemoved", "FlyBySound_EntityRemoved", function(ent)
   if isValidSound(ent.FlyBySound) then
