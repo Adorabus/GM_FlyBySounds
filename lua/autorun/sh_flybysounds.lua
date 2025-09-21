@@ -11,67 +11,67 @@ local cv_playerSounds = CreateConVar("sv_flybysound_playersounds", 0, {FCVAR_REP
 local cv_spinSounds = CreateConVar("sv_flybysound_spinsounds", 0, {FCVAR_REPLICATED, FCVAR_ARCHIVE, FCVAR_NOTIFY}, "If set to 1, the sound will be heard when an entity is spinning.")
 
 concommand.Add("sv_flybysound_resetconvars", function(ply)
-	cv_minspeed:Revert()
-	cv_maxspeed:Revert()
-	cv_minshapevolume:Revert()
-	cv_maxshapevolume:Revert()
-	cv_minvol:Revert()
-	cv_playerSounds:Revert()
-	cv_spinSounds:Revert()
+  cv_minspeed:Revert()
+  cv_maxspeed:Revert()
+  cv_minshapevolume:Revert()
+  cv_maxshapevolume:Revert()
+  cv_minvol:Revert()
+  cv_playerSounds:Revert()
+  cv_spinSounds:Revert()
 end)
 
 FlyBySound_validClasses = {
-	"prop_physics",
-	"prop_physics_override",
-	"prop_physics_multiplayer",
-	"prop_ragdoll",
+  "prop_physics",
+  "prop_physics_override",
+  "prop_physics_multiplayer",
+  "prop_ragdoll",
 
-	"prop_vehicle_jeep",
-	"prop_vehicle_airboat",
-	"prop_vehicle_prisoner_pod",
+  "prop_vehicle_jeep",
+  "prop_vehicle_airboat",
+  "prop_vehicle_prisoner_pod",
 
-	"npc_rollermine",
-	"sent_ball",
-	"player",
+  "npc_rollermine",
+  "sent_ball",
+  "player",
 
-	"gmod_wheel",
+  "gmod_wheel",
 }
 
 local function isValidClass(ent)
-	for _, class in ipairs(FlyBySound_validClasses) do
-		if ent:GetClass() == class then
-			return true
-		end
-	end
+  for _, class in ipairs(FlyBySound_validClasses) do
+    if ent:GetClass() == class then
+      return true
+    end
+  end
 
-	return false
+  return false
 end
 
 -- Properties for Sandbox (hold C and right click on an entity)
 properties.Add("flybysounds_on", {
-	MenuLabel = "Enable Fly By Sounds",
-	Order = 3200,
-	MenuIcon = "icon16/sound.png",
+  MenuLabel = "Enable Fly By Sounds",
+  Order = 3200,
+  MenuIcon = "icon16/sound.png",
 
-	Filter = function(self, ent, ply)
-		if (!IsValid(ent)) then return false end
-		if (ent:IsPlayer()) then return false end
-		if (!isValidClass(ent)) then return false end
+  Filter = function(self, ent, ply)
+    if (!IsValid(ent)) then return false end
+    if (ent:IsPlayer()) then return false end
+    if (!isValidClass(ent)) then return false end
 
-		return ent:GetNW2Bool("flyBySoundsDisabled", false)
-	end,
+    return ent:GetNW2Bool("flyBySoundsDisabled", false)
+  end,
 
-	Action = function (self, ent)
-		self:MsgStart()
-			net.WriteEntity(ent)
-		self:MsgEnd()
-	end,
+  Action = function (self, ent)
+    self:MsgStart()
+      net.WriteEntity(ent)
+    self:MsgEnd()
+  end,
 
-	Receive = function (self, length, ply)
-		local ent = net.ReadEntity()
+  Receive = function (self, length, ply)
+    local ent = net.ReadEntity()
 
-		ent:SetNW2Bool("flyBySoundsDisabled", false)
-	end
+    ent:SetNW2Bool("flyBySoundsDisabled", false)
+  end
 })
 
 properties.Add("flybysounds_off", {
@@ -82,7 +82,7 @@ properties.Add("flybysounds_off", {
   Filter = function(self, ent, ply)
     if (!IsValid(ent)) then return false end
     if (ent:IsPlayer()) then return false end
-		if (!isValidClass(ent)) then return false end
+    if (!isValidClass(ent)) then return false end
 
     return !ent:GetNW2Bool("flyBySoundsDisabled", false)
   end,
