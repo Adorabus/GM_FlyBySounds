@@ -1,4 +1,4 @@
-local minspeed, maxspeed, minshapevolume, maxshapevolume, minvol, cutoffDist, scanDelay, updateDelay, spinSounds, playerSounds, windSound, debugMode
+local minspeed, maxspeed, minshapevolume, maxshapevolume, minvol, cutoffDist, scanDelay, updateDelay, spinSounds, playerSounds, windSound, debugMode, loudness
 
 
 
@@ -19,6 +19,7 @@ CreateClientConVar("cl_flybysound_updatedelay", 0.05, true, false, "How often th
 CreateClientConVar("cl_flybysound_cutoffdist", 3000, true, false, "Maximum distance at which sounds can be heard. Smaller values can give better performance in large maps.", 0, 10000)
 CreateClientConVar("cl_flybysound_altsound", 0, true, false, "If set to 1 then an alternative wind sound will play. (Portal 2)")
 CreateClientConVar("cl_flybysound_debug", 0, true, false, "If set to 1 then debug messages will be displayed.")
+CreateClientConVar("cl_flybysound_loudness", 1.0, true, false, "Scales the audio volume of the sounds.")
 
 cv_minspeed        = GetConVar("sv_flybysound_minspeed")
 cv_maxspeed        = GetConVar("sv_flybysound_maxspeed")
@@ -32,6 +33,7 @@ cv_playerSounds    = GetConVar("sv_flybysound_playersounds")
 cv_spinSounds      = GetConVar("sv_flybysound_spinsounds")
 cv_windSound       = GetConVar("cl_flybysound_altsound")
 cv_debug           = GetConVar('cl_flybysound_debug')
+cv_loudness        = GetConVar('cl_flybysound_loudness')
 
 
 concommand.Add("cl_flybysound_resetconvars", function()
@@ -40,6 +42,7 @@ concommand.Add("cl_flybysound_resetconvars", function()
   cv_cutoffDist:Revert()
   cv_windSound:Revert()
   cv_debug:Revert()
+  cv_loudness:Revert()
 end)
 
 local function updateCVars()
@@ -54,6 +57,7 @@ local function updateCVars()
   playerSounds    = cv_playerSounds:GetBool()
   spinSounds      = cv_spinSounds:GetBool()
   debugMode       = cv_debug:GetBool()
+  loudness        = cv_loudness:GetFloat()
 
   windSound = "pink/flybysounds/fast_windloop1-louder.wav"
   if cv_windSound:GetBool() == true then
@@ -183,6 +187,9 @@ local function updateSound(entity)
   if dist < 0 then dist = 0 end
 
   local volume = (math.Clamp(speed, minspeed, maxspeed) - minspeed) / (maxspeed - minspeed)
+
+  volume = volume * loudness
+
   if entity == LocalPlayer() then volume = volume / 3 end
 
   local pitch = ((1 - ((math.Clamp(shapevolume, minshapevolume, maxshapevolume) - minshapevolume) / (maxshapevolume - minshapevolume))) * 200) - (dist / 500) * 50
@@ -259,6 +266,8 @@ hook.Add("PopulateToolMenu", "FlyBySoundsMenu", function()
 		panel:NumSlider("Sound Update Delay", "cl_flybysound_updatedelay", 0.00, 0.300, 2)
 
 		panel:NumSlider("Maximum Audible Distance", "cl_flybysound_cutoffdist", 0, 10000, 1)
+
+    panel:NumSlider("Loudness", "cl_flybysound_loudness", 0.00, 1.00, 2)
 
 		panel:CheckBox("Alternative Sound Effect", "cl_flybysound_altsound")
 
